@@ -102,7 +102,7 @@ const navDefMap: Record<UserRole, NavItemDef[] | null> = {
 // =============================================
 export function DashboardLayout({ role }: { role: UserRole }) {
   const { user, logout } = useAuth();
-  const { t } = useLanguage();
+  const { t, tr } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -129,7 +129,7 @@ export function DashboardLayout({ role }: { role: UserRole }) {
     loadNotifications();
   }, [loadNotifications]);
 
-  // Build nav items – for farmer, resolve from translation; for others, keep static
+  // Build nav items – for farmer, resolve from translation; for others, localize with tr()
   const navDefs = navDefMap[role];
   const navItems: NavItem[] = navDefs
     ? navDefs.map(def => ({
@@ -139,10 +139,11 @@ export function DashboardLayout({ role }: { role: UserRole }) {
         badge: def.key === 'alerts' && alertBadgeCount > 0 ? alertBadgeCount : undefined,
       }))
     : (navMap[role] || []).map(item => {
-        if (item.label === 'Alerts') {
-          return { ...item, badge: alertBadgeCount > 0 ? alertBadgeCount : undefined };
+        const localizedLabel = tr(item.label);
+        if (item.label === 'Alerts' || item.label === 'Pending Verification') {
+          return { ...item, label: localizedLabel, badge: alertBadgeCount > 0 ? alertBadgeCount : item.badge };
         }
-        return item;
+        return { ...item, label: localizedLabel };
       });
 
   // Resolve role label

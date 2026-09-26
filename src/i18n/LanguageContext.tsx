@@ -6,13 +6,15 @@
 // ============================================
 
 import {
-  createContext, useContext, useState, useCallback, useEffect,
+  createContext, useContext, useState, useCallback, useEffect, useRef,
   type ReactNode,
 } from 'react';
 import {
   dictionaries, localeNames, supportedLocales, ttsLangCodes,
   type SupportedLocale, type TranslationDictionary,
 } from './translations';
+import { translatePhrase } from './phraseDictionary';
+import { setupDOMTranslator, updateDOMTranslation } from './domTranslator';
 
 const STORAGE_KEY = 'cropshield-locale';
 
@@ -35,6 +37,8 @@ interface LanguageContextType {
   setLocale: (locale: SupportedLocale) => void;
   /** Translation dictionary for current locale */
   t: TranslationDictionary;
+  /** Direct phrase translation helper */
+  tr: (text: string) => string;
   /** All supported locale codes */
   locales: SupportedLocale[];
   /** Map of locale code → display names */
@@ -47,6 +51,8 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<SupportedLocale>(readStoredLocale);
+  const localeRef = useRef(locale);
+  localeRef.current = locale;
 
   const setLocale = useCallback((newLocale: SupportedLocale) => {
     setLocaleState(newLocale);
@@ -57,15 +63,27 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Set html lang attribute
+  const tr = useCallback((text: string): string => {
+    return translatePhrase(text, locale);
+  }, [locale]);
+
+  // Set html lang attribute and trigger DOM translation
   useEffect(() => {
     document.documentElement.lang = locale;
+    updateDOMTranslation(locale);
   }, [locale]);
+
+  // Attach global DOM watcher on mount
+  useEffect(() => {
+    const cleanup = setupDOMTranslator(() => localeRef.current);
+    return cleanup;
+  }, []);
 
   const value: LanguageContextType = {
     locale,
     setLocale,
     t: dictionaries[locale],
+    tr,
     locales: supportedLocales,
     localeNames,
     ttsLang: ttsLangCodes[locale],

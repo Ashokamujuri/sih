@@ -4,11 +4,12 @@
 // hotspot detection, filters, and trend panel.
 // ============================================
 import { useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Circle, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Circle, Popup, useMap, LayersControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
   MapPin, X, Filter, TrendingUp, TrendingDown, Minus,
   AlertTriangle, Leaf, Bug, Calendar, User, Shield, Eye,
+  Layers, Satellite,
 } from 'lucide-react';
 import { RiskBadge, Button } from '../../components/ui';
 import {
@@ -64,6 +65,8 @@ export function HotspotMapPage() {
 
   // Expanded hotspot
   const [expandedHotspot, setExpandedHotspot] = useState<Hotspot | null>(null);
+  // Map layer mode: satellite vs standard
+  const [mapMode, setMapMode] = useState<'satellite' | 'standard'>('satellite');
 
   const crops = getGeoReportCrops();
   const diseases = getGeoReportDiseases();
@@ -113,6 +116,46 @@ export function HotspotMapPage() {
           <h1><MapPin size={22} /> Regional Hotspot Map</h1>
           <p className="hotspot-page__subtitle">Interactive disease surveillance map · {reports.length} reports plotted</p>
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            onClick={() => setMapMode('satellite')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              border: mapMode === 'satellite' ? '2px solid var(--color-primary-600)' : '1px solid var(--color-gray-300)',
+              backgroundColor: mapMode === 'satellite' ? 'var(--color-primary-50)' : 'var(--color-white)',
+              color: mapMode === 'satellite' ? 'var(--color-primary-800)' : 'var(--color-gray-700)',
+              fontWeight: 600,
+              fontSize: '13px',
+              cursor: 'pointer'
+            }}
+          >
+            <Satellite size={14} />
+            <span>Satellite View</span>
+          </button>
+          <button
+            onClick={() => setMapMode('standard')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              border: mapMode === 'standard' ? '2px solid var(--color-primary-600)' : '1px solid var(--color-gray-300)',
+              backgroundColor: mapMode === 'standard' ? 'var(--color-primary-50)' : 'var(--color-white)',
+              color: mapMode === 'standard' ? 'var(--color-primary-800)' : 'var(--color-gray-700)',
+              fontWeight: 600,
+              fontSize: '13px',
+              cursor: 'pointer'
+            }}
+          >
+            <Layers size={14} />
+            <span>Standard View</span>
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -156,10 +199,27 @@ export function HotspotMapPage() {
               scrollWheelZoom={true}
               style={{ height: '520px', width: '100%' }}
             >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
+              {mapMode === 'satellite' ? (
+                <>
+                  {/* High-Resolution Satellite Imagery from Esri World Imagery */}
+                  <TileLayer
+                    attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                    maxZoom={19}
+                  />
+                  {/* Administrative boundaries & road overlay for satellite clarity */}
+                  <TileLayer
+                    attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png"
+                    maxZoom={19}
+                  />
+                </>
+              ) : (
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+              )}
               <FitBounds reports={reports} />
 
               {/* Hotspot circles */}

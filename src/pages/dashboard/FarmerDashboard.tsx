@@ -12,11 +12,13 @@ import {
 } from 'lucide-react';
 import { LoadingState, Button, RiskBadge, SeverityBadge, ConfidenceBadge, StatusBadge, Modal, useToast } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../i18n';
 import {
   getWeather, getAlerts, getFarmerCropRisks, getEarlyWarning,
   getFarmerAdvisory, getFarmerReports,
   getWeatherDiseaseInsight,
 } from '../../data/services';
+import { getLiveCoordinates, type LiveLocationData } from '../../data/liveWeatherService';
 import { calculateRegionalRisk, getDefaultLocation } from '../../data/riskEngine';
 import type {
   WeatherData, Alert, FarmerCropRisk, EarlyWarning,
@@ -57,8 +59,10 @@ const growthStageLabels: Record<string, string> = {
 export function FarmerDashboard() {
   const { user } = useAuth();
   const { addToast } = useToast();
+  const { t, tr, locale } = useLanguage();
 
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [liveLocation, setLiveLocation] = useState<LiveLocationData | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [crops, setCrops] = useState<FarmerCropRisk[]>([]);
   const [earlyWarning, setEarlyWarning] = useState<EarlyWarning | null>(null);
@@ -77,7 +81,8 @@ export function FarmerDashboard() {
 
   useEffect(() => {
     async function load() {
-      const [w, a, c, ew, adv, r, wi] = await Promise.all([
+      const [coords, w, a, c, ew, adv, r, wi] = await Promise.all([
+        getLiveCoordinates(),
         getWeather(),
         getAlerts(),
         getFarmerCropRisks(),
@@ -86,6 +91,7 @@ export function FarmerDashboard() {
         getFarmerReports(),
         getWeatherDiseaseInsight(),
       ]);
+      setLiveLocation(coords);
       // Risk engine call (separate — uses its own providers)
       const rr = await calculateRegionalRisk({ location: getDefaultLocation() });
       setWeather(w);
@@ -158,16 +164,31 @@ export function FarmerDashboard() {
       <header className="farmer-dash__header">
         <div className="farmer-dash__welcome">
           <h1 className="farmer-dash__greeting">
-            Welcome, {user?.name?.split(' ')[0] || 'Farmer'} 👋
+            {tr('Welcome,')} {user?.name?.split(' ')[0] || t.roles.farmer} 👋
           </h1>
           <div className="farmer-dash__location">
-            <MapPin size={14} />
-            <span>Khanna Block, Ludhiana, Punjab</span>
+            <MapPin size={14} style={{ color: liveLocation?.source === 'gps' ? 'var(--color-success)' : 'inherit' }} />
+            <span>
+              {liveLocation ? `${liveLocation.locality}, ${liveLocation.state}` : tr('Locating farm area...')}
+            </span>
+            {liveLocation?.source === 'gps' && (
+              <span style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                backgroundColor: 'var(--color-success-bg, #dcfce7)',
+                color: 'var(--color-success, #16a34a)',
+                padding: '1px 6px',
+                borderRadius: '4px',
+                marginLeft: '4px'
+              }}>
+                {tr('LIVE GPS')}
+              </span>
+            )}
           </div>
         </div>
         <div className="farmer-dash__header-meta">
           <span className="farmer-dash__date">
-            {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            {new Date().toLocaleDateString(locale === 'hi' ? 'hi-IN' : locale === 'te' ? 'te-IN' : locale === 'mr' ? 'mr-IN' : 'en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </span>
         </div>
       </header>
@@ -186,10 +207,10 @@ export function FarmerDashboard() {
             <ShieldAlert size={28} />
           </div>
           <div className="summary-card__content">
-            <span className="summary-card__label">Regional Crop Health Risk</span>
+            <span className="summary-card__label">{tr('Regional Crop Health Risk')}</span>
             <div className="summary-card__value-row">
               <span className="summary-card__value" style={{ color: riskColorMap[regionalRisk?.riskLevel || 'moderate'] }}>
-                {regionalRisk?.riskLevel === 'low' ? 'Low' : regionalRisk?.riskLevel === 'moderate' ? 'Moderate' : regionalRisk?.riskLevel === 'high' ? 'High' : 'Critical'}
+                {regionalRisk?.riskLevel === 'low' ? tr('Low') : regionalRisk?.riskLevel === 'moderate' ? tr('Moderate') : regionalRisk?.riskLevel === 'high' ? tr('High') : tr('Critical')}
               </span>
               <span className="summary-card__pct" style={{ color: riskColorMap[regionalRisk?.riskLevel || 'moderate'] }}>
                 {regionalRisk?.riskScore}%
@@ -197,7 +218,7 @@ export function FarmerDashboard() {
             </div>
             <p className="summary-card__desc">{regionalRisk?.explanation?.slice(0, 100)}...</p>
             <Link to="/farmer/risk" style={{ fontSize: 'var(--text-xs)', color: riskColorMap[regionalRisk?.riskLevel || 'moderate'], fontWeight: 600, marginTop: '4px', display: 'inline-block' }}>
-              View Full Assessment →
+              {tr('View Full Assessment →')}
             </Link>
           </div>
         </div>
@@ -208,9 +229,9 @@ export function FarmerDashboard() {
             <Bell size={28} />
           </div>
           <div className="summary-card__content">
-            <span className="summary-card__label">Active Alerts</span>
+            <span className="summary-card__label">{tr('Active Alerts')}</span>
             <span className="summary-card__value">{activeAlertCount}</span>
-            <p className="summary-card__desc">warnings need your attention</p>
+            <p className="summary-card__desc">{tr('warnings need your attention')}</p>
           </div>
         </div>
 
@@ -220,12 +241,12 @@ export function FarmerDashboard() {
             <FileText size={28} />
           </div>
           <div className="summary-card__content">
-            <span className="summary-card__label">My Crop Reports</span>
+            <span className="summary-card__label">{tr('My Crop Reports')}</span>
             <div className="summary-card__value-row">
               <span className="summary-card__value">{reports.length}</span>
-              <span className="summary-card__sub">total</span>
+              <span className="summary-card__sub">{tr('total')}</span>
               <span className="summary-card__divider">·</span>
-              <span className="summary-card__confirmed"><CheckCircle size={13} /> {confirmedReports} confirmed</span>
+              <span className="summary-card__confirmed"><CheckCircle size={13} /> {confirmedReports} {tr('confirmed')}</span>
             </div>
           </div>
         </div>
@@ -241,10 +262,10 @@ export function FarmerDashboard() {
             <Eye size={28} />
           </div>
           <div className="summary-card__content">
-            <span className="summary-card__label">Follow-up Required</span>
+            <span className="summary-card__label">{tr('Follow-up Required')}</span>
             <span className="summary-card__value">{followUpCount}</span>
             <p className="summary-card__desc">
-              {followUpCount > 0 ? 'reports need your action' : 'all reports are up to date'}
+              {followUpCount > 0 ? tr('reports need your action') : tr('all reports are up to date')}
             </p>
           </div>
         </div>
@@ -425,9 +446,26 @@ export function FarmerDashboard() {
 
           {/* WEATHER CARD WITH DISEASE INSIGHT */}
           <div className="weather-insight-card">
-            <h3 className="weather-insight-card__title">
-              <Thermometer size={18} /> Weather & Disease Risk
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <h3 className="weather-insight-card__title" style={{ margin: 0 }}>
+                <Thermometer size={18} /> Weather & Disease Risk
+              </h3>
+              <span style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                color: 'var(--color-primary-700)',
+                backgroundColor: 'var(--color-primary-50)',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                border: '1px solid var(--color-primary-200)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                <MapPin size={10} />
+                {liveLocation?.locality || 'Live Station'}
+              </span>
+            </div>
             {weather && (
               <>
                 <div className="weather-insight-card__current">

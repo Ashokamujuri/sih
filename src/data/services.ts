@@ -81,9 +81,18 @@ export async function getAlerts(): Promise<Alert[]> {
 }
 
 // ---------- Weather ----------
+import { getLiveCoordinates, fetchLiveWeatherByCoords } from './liveWeatherService';
+
 export async function getWeather(): Promise<WeatherData> {
-  await delay(400);
-  return mockWeather;
+  try {
+    const coords = await getLiveCoordinates();
+    const live = await fetchLiveWeatherByCoords(coords.latitude, coords.longitude);
+    return live;
+  } catch (err) {
+    console.warn('Fallback to mock weather:', err);
+    await delay(200);
+    return mockWeather;
+  }
 }
 
 // ---------- Advisories ----------

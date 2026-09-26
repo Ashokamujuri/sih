@@ -2,7 +2,7 @@
 // AI Crop Detection – Multi-Step Workflow
 // /farmer/detect
 // ============================================
-import { useState, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Camera, Upload, ArrowRight, ArrowLeft, AlertTriangle, Check,
@@ -11,6 +11,7 @@ import {
   Save, Send, Home, RotateCcw, X, CheckCircle, XCircle,
 } from 'lucide-react';
 import { Button, RiskBadge, SeverityBadge, ConfidenceBadge, Modal, useToast } from '../../components/ui';
+import { getLiveCoordinates } from '../../data/liveWeatherService';
 import {
   analyzeImage,
   generateAssessment,
@@ -76,6 +77,18 @@ export function DetectPage() {
 
   // Upload state
   const [dragActive, setDragActive] = useState(false);
+
+  // Auto-detect live farm coordinates
+  useEffect(() => {
+    getLiveCoordinates().then(loc => {
+      if (loc && loc.locality) {
+        setInput(prev => ({
+          ...prev,
+          location: `${loc.locality}, ${loc.state}`,
+        }));
+      }
+    });
+  }, []);
 
   // Analysis state
   const [stages, setStages] = useState<AnalysisStage[]>(getAnalysisStages());

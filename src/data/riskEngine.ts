@@ -56,25 +56,30 @@ const CATEGORY_WEIGHTS = {
 // PROVIDERS (Mock — replace with real APIs)
 // ============================================
 
+import { getLiveCoordinates, fetchLiveWeatherByCoords, getLiveWeatherConditions } from './liveWeatherService';
+
 /**
  * Weather data provider.
- * In production: call IMD API or OpenWeatherMap via a backend proxy.
- * NEVER expose API keys in frontend code.
+ * Fetches real-time localized weather via Open-Meteo & browser geolocation.
  */
-async function fetchWeatherData(_input: RiskEngineInput): Promise<WeatherConditions> {
-  // Simulated delay
-  await delay(200);
-
-  return {
-    temperature: 29,
-    humidity: 84,
-    rainfall: 12,
-    windSpeed: 14,
-    condition: 'Partly Cloudy',
-    dewPoint: 25,
-    leafWetnessDuration: 8, // hours — high risk when > 6
-    soilMoisture: 72,
-  };
+async function fetchWeatherData(input: RiskEngineInput): Promise<WeatherConditions> {
+  try {
+    const coords = await getLiveCoordinates();
+    const live = await fetchLiveWeatherByCoords(coords.latitude, coords.longitude);
+    return getLiveWeatherConditions(live);
+  } catch {
+    await delay(100);
+    return {
+      temperature: 29,
+      humidity: 84,
+      rainfall: 12,
+      windSpeed: 14,
+      condition: 'Partly Cloudy',
+      dewPoint: 25,
+      leafWetnessDuration: 8, // hours — high risk when > 6
+      soilMoisture: 72,
+    };
+  }
 }
 
 /**
