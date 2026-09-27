@@ -333,6 +333,120 @@ export interface DetectionReport {
 }
 
 // ============================================
+// Unified Scan Pipeline Types
+// ============================================
+// These types define the refactored unified flow:
+// SCAN → ROUTE → MODEL → AI IDENTIFICATION → RISK ENGINE → ALERT/ADVISORY
+//
+// KEY RULE: aiConfidence and riskScore are completely separate values.
+//   aiConfidence = How certain the MODEL is about its identification (0–1)
+//   riskScore    = How serious the crop-health risk is given context (0–100)
+// ============================================
+
+/** The type of agricultural problem detected by the AI router */
+export type ProblemType = 'disease' | 'pest' | 'uncertain';
+
+/**
+ * Pure AI model output — contains ONLY what the model determined.
+ * Does NOT contain risk score. Risk is calculated separately by the Risk Engine.
+ */
+export interface AIIdentification {
+  problemType: ProblemType;
+  prediction: string;           // e.g. "Early Blight", "Fall Armyworm"
+  scientificName: string;       // e.g. "Alternaria solani"
+  /** Model certainty: 0.0 to 1.0 — purely how confident the AI model is */
+  confidence: number;
+  confidenceLevel: ConfidenceLevel;
+  severity: Severity;           // Visual/observed severity from image
+  symptoms: string[];
+  description: string;
+  imagePreview: string;
+  analyzedAt: string;
+}
+
+/**
+ * Pest-specific model output (extends AIIdentification).
+ * Extension point — add more pest fields here without touching disease logic.
+ */
+export interface PestIdentification extends AIIdentification {
+  problemType: 'pest';
+  pestCategory: 'insect' | 'mite' | 'nematode' | 'rodent' | 'bird' | 'other';
+  /** Estimated % of field/crop area infested */
+  infestedArea?: string;
+  /** Economic threshold description (e.g. "2 larvae/plant") */
+  economicThreshold?: string;
+  /** Life stage of the pest (e.g. "2nd instar larva") */
+  lifeStage?: string;
+}
+
+/**
+ * A single risk driver that contributes to the overall risk score.
+ * Used in both the legacy ContextualAssessment and the new RiskAssessment.
+ */
+export interface RiskFactor {
+  factor: string;
+  impact: 'positive' | 'negative' | 'neutral';
+  detail: string;
+}
+
+/**
+ * Risk Assessment — computed by the Common Risk Engine.
+ * Completely independent of AI confidence.
+ * Input: location, weather, nearby reports, growth stage, history, seasonal context.
+ * Output: a contextual risk score 0–100.
+ */
+export interface RiskAssessment {
+  /** 0–100 — crop health risk severity in this farmer's context. NOT the AI confidence. */
+  riskScore: number;
+  riskLevel: RiskLevel;
+  riskFactors: RiskFactor[];
+  weatherContribution: string;
+  regionalContext: string;
+  growthStageImpact: string;
+}
+
+/**
+ * The complete result of one crop health scan.
+ * Clearly separates AI identification from contextual risk assessment.
+ */
+export interface UnifiedScanResult {
+  id: string;
+  cropType: string;
+  cropVariety?: string;
+  growthStage: string;
+  location: string;
+  problemType: ProblemType;
+  /**
+   * AI model output — confidence only, no risk score.
+   * Use aiIdentification.confidence for "how certain the model is".
+   */
+  aiIdentification: AIIdentification | PestIdentification;
+  /**
+   * Contextual risk assessment — riskScore only, no model confidence.
+   * Use riskAssessment.riskScore for "how serious the situation is".
+   */
+  riskAssessment: RiskAssessment;
+  imagePreview: string;
+  analyzedAt: string;
+}
+
+/** Input for the AI problem router */
+export interface RouterInput {
+  cropType: string;
+  symptomsDescription?: string;
+  /** Image data URI or null */
+  imagePreview: string | null;
+}
+
+/** Output of the AI problem router */
+export interface RouterOutput {
+  problemType: ProblemType;
+  /** Confidence of the router's own classification (e.g. 0.82 → "this is a pest problem") */
+  routerConfidence: number;
+  reason: string;
+}
+
+// ============================================
 // Regional Risk Prediction Engine Types
 // ============================================
 
@@ -520,6 +634,9 @@ export interface CropAdvisory {
   source: AdvisorySource;
   status: AdvisoryStatus;
 
+  /** Whether this advisory addresses a disease, pest, or uncertain problem */
+  problemType?: 'disease' | 'pest' | 'uncertain';
+
   // Core content
   whatIsHappening: string;
   whyRiskExists: string[];
@@ -541,3 +658,4 @@ export interface CropAdvisory {
   // Safety
   safetyDisclaimer: string;
 }
+

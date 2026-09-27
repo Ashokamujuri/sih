@@ -766,3 +766,129 @@ export const priorityColors: Record<AdvisoryPriority, string> = {
   urgent: 'var(--color-warning)',
   critical: 'var(--color-danger)',
 };
+
+// ============================================
+// UNIFIED PIPELINE EXTENSION POINT
+// ============================================
+// The following functions integrate pest detection into the same advisory
+// pipeline as disease detection. Both feed into:
+//   Alert Service → Expert Verification → Follow-Up Monitoring
+//
+// No code duplication — pest advisories reuse the same CropAdvisory type,
+// downstream alert, expert, and monitoring services.
+// ============================================
+
+import type { PestIdentification, RiskAssessment } from '../types';
+
+/**
+ * Generates an advisory from a pest identification result.
+ * EXTENSION POINT: mirrors generateAdvisoryFromDetection() for the pest model.
+ *
+ * Like disease advisories, this:
+ * - Uses the same CropAdvisory type
+ * - Flows into the same alert/expert/monitoring downstream services
+ * - Includes the same safety disclaimer
+ * - Does NOT duplicate risk logic (risk score comes from the shared Risk Engine)
+ */
+export function generateAdvisoryFromPestDetection(
+  pestId: PestIdentification,
+  riskAssessment: RiskAssessment,
+  cropType: string,
+  location: string,
+): CropAdvisory {
+  const isHighRisk = riskAssessment.riskLevel === 'high' || riskAssessment.riskLevel === 'critical';
+
+  return {
+    id: `ADV-PEST-${Date.now()}`,
+    title: `Pest Management Advisory — ${pestId.prediction}`,
+    crop: cropType,
+    location,
+    // riskLevel comes from the Risk Engine (context-based), not from AI confidence
+    riskLevel: riskAssessment.riskLevel,
+    priority: riskAssessment.riskLevel === 'critical' ? 'critical' :
+              riskAssessment.riskLevel === 'high' ? 'urgent' :
+              riskAssessment.riskLevel === 'moderate' ? 'important' : 'routine',
+    source: 'ai-detection',
+    status: 'active',
+    problemType: 'pest',
+
+    whatIsHappening:
+      `AI analysis has identified ${pestId.prediction} (${pestId.scientificName}) affecting your ${cropType} crop. ` +
+      `The pest was identified with ${(pestId.confidence * 100).toFixed(0)}% model confidence. ` +
+      (pestId.infestedArea ? `Estimated affected area: ${pestId.infestedArea}. ` : '') +
+      `Current risk score for your field: ${riskAssessment.riskScore}/100 (${riskAssessment.riskLevel.toUpperCase()}).`,
+
+    whyRiskExists: [
+      ...riskAssessment.riskFactors
+        .filter(f => f.impact === 'negative')
+        .map(f => f.detail),
+      `Economic threshold: ${pestId.economicThreshold || 'consult your agriculture officer'}`,
+      pestId.lifeStage ? `Current pest life stage: ${pestId.lifeStage} — this determines treatment window` : '',
+    ].filter(Boolean) as string[],
+
+    whatToInspect: [
+      ...pestId.symptoms.slice(0, 3),
+      `Count pest population per plant/area and compare with economic threshold`,
+      `Check neighbouring plants and surrounding areas for spread`,
+      `Examine both leaf surfaces, stems, and fruit/bolls depending on crop`,
+    ],
+
+    immediateActions: isHighRisk ? [
+      'Do NOT delay — pest populations can multiply rapidly above economic threshold',
+      'Install pheromone traps immediately for population monitoring',
+      'Remove and destroy heavily infested plant parts to reduce pest load',
+      'Isolate the affected area from healthy sections where possible',
+      'Contact your agriculture officer for approved IPM treatment options',
+      'Upload a follow-up photo to CropShield AI in 48 hours to track spread',
+    ] : [
+      'Install monitoring traps (sticky traps, pheromone traps) to track population',
+      'Count pest numbers per plant and record in your farm diary',
+      'Remove heavily infested leaves or plant parts where feasible',
+      'Encourage natural predators — avoid broad-spectrum insecticides',
+      'Monitor every 3–5 days and reassess at economic threshold',
+    ],
+
+    monitoringInstructions: [
+      {
+        task: `Inspect ${cropType} plants for ${pestId.prediction} signs`,
+        frequency: isHighRisk ? 'Daily' : 'Every 3 days',
+        duration: '21 days',
+        whatToLookFor: pestId.symptoms[0] || 'Pest presence, feeding damage, or new colonies',
+      },
+      {
+        task: 'Check and count pheromone/sticky trap catches',
+        frequency: 'Every 2 days',
+        duration: '21 days',
+        whatToLookFor: `Trap count rising above ${pestId.economicThreshold || 'threshold — consult officer'}`,
+      },
+      {
+        task: 'Upload progress photo to CropShield AI',
+        frequency: 'Every 4 days',
+        duration: '21 days',
+        whatToLookFor: 'Changes in infestation area and damage progression compared to initial scan',
+      },
+    ],
+
+    integratedManagement: [
+      'Follow Integrated Pest Management (IPM) principles — chemical control is the last resort',
+      'Use biological control agents where available (e.g., Trichogramma wasps, NPV, HaNPV)',
+      'Consult your agriculture officer about approved, targeted insecticides as per product label',
+      'Avoid broad-spectrum insecticides that kill natural predators and cause resistance',
+      'Practice crop rotation and inter-cropping to break pest cycles in future seasons',
+      'Maintain field sanitation — remove crop debris and alternate host plants',
+    ],
+
+    escalationCondition:
+      'Contact your agriculture officer or call the Kisan Call Centre (1800-180-1551) if: ' +
+      'pest population exceeds the economic threshold; spread is rapid across the field; ' +
+      'you observe signs of pesticide resistance; or condition worsens after initial treatment.',
+
+    issuedAt: new Date().toISOString(),
+    validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    issuedBy: 'CropShield AI Pest Module',
+    emoji: '🐛',
+
+    safetyDisclaimer: SAFETY_DISCLAIMER,
+  };
+}
+

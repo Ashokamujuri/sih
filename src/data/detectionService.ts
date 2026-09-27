@@ -266,6 +266,9 @@ export async function analyzeImage(
 /**
  * Generates contextual assessment by combining AI result with
  * weather, regional, and crop data.
+ *
+ * @deprecated Use buildRiskAssessment() for new unified pipeline code.
+ * This function is preserved for backward compatibility with DetectPage.tsx.
  */
 export function generateAssessment(result: DetectionResult): ContextualAssessment {
   const riskFactors = [
@@ -311,6 +314,126 @@ export function generateAssessment(result: DetectionResult): ContextualAssessmen
   return {
     overallRisk: result.riskLevel,
     riskPercentage: riskScores[result.riskLevel] || 60,
+    riskFactors,
+    weatherContribution: 'High humidity and warm temperatures significantly increase the risk of disease spread. Rain forecast for the next 48 hours may worsen conditions.',
+    regionalContext: 'Multiple farms in your district have reported similar symptoms. The disease appears to be spreading in the region.',
+    growthStageImpact: `Your crop is in the ${result.growthStage} stage, which is ${result.growthStage === 'fruiting' || result.growthStage === 'flowering' ? 'a critical period where disease can cause significant yield loss' : 'a stage with moderate vulnerability to this type of disease'}.`,
+  };
+}
+
+// =============================================
+// UNIFIED PIPELINE API — New architecture
+// =============================================
+// These functions are the clean implementation of the unified flow.
+// Use these for any new code; legacy functions above remain for compat.
+//
+// CRITICAL DISTINCTION:
+//   buildAIIdentification() → AI model output  (confidence: 0–1)
+//   buildRiskAssessment()   → context-based    (riskScore: 0–100)
+//   These are DIFFERENT values with DIFFERENT meanings.
+// =============================================
+
+import type { AIIdentification, RiskAssessment } from '../types';
+
+/**
+ * Converts a DetectionResult into a clean AIIdentification object.
+ *
+ * AIIdentification contains ONLY what the AI model determined:
+ *   - prediction, scientificName, symptoms, description
+ *   - confidence (0.0–1.0) = HOW CERTAIN THE MODEL IS
+ *   - severity = visual severity observed in the image
+ *
+ * DOES NOT include: riskScore, riskLevel derived from context.
+ * Those are computed separately by buildRiskAssessment().
+ */
+export function buildAIIdentification(result: DetectionResult): AIIdentification {
+  return {
+    problemType: 'disease',
+    prediction: result.prediction,
+    scientificName: result.scientificName,
+    // AI model certainty — how confident the model is about this identification
+    confidence: result.confidence,
+    confidenceLevel: result.confidenceLevel,
+    // Visual severity observed in the image — NOT the same as crop risk
+    severity: result.severity,
+    symptoms: result.symptoms,
+    description: result.description,
+    imagePreview: result.imagePreview,
+    analyzedAt: result.analyzedAt,
+  };
+}
+
+/**
+ * Computes a context-based risk assessment for an identified problem.
+ *
+ * RiskAssessment is COMPLETELY INDEPENDENT of AI confidence.
+ * It answers: "How serious is this for THIS farmer's crop RIGHT NOW?"
+ * Considers: location, weather, nearby reports, growth stage, disease history.
+ *
+ * riskScore (0–100)   ≠   confidence (0–1)
+ * riskLevel (RiskLevel)   ≠   confidenceLevel (ConfidenceLevel)
+ *
+ * In production: call calculateRegionalRisk() from riskEngine.ts
+ * with full location + crop context rather than deriving from confidence.
+ */
+export function buildRiskAssessment(result: DetectionResult): RiskAssessment {
+  const riskFactors = [
+    {
+      factor: 'Weather Conditions',
+      impact: 'negative' as const,
+      detail: 'Current humidity (78%) and temperature (32°C) create favourable conditions for fungal and bacterial growth',
+    },
+    {
+      factor: 'Growth Stage Vulnerability',
+      impact: (result.growthStage === 'fruiting' || result.growthStage === 'flowering') ? 'negative' as const : 'neutral' as const,
+      detail: `Crop is in ${result.growthStage} stage — ${result.growthStage === 'fruiting' || result.growthStage === 'flowering' ? 'highly susceptible to yield loss at this stage' : 'moderate vulnerability at this growth stage'}`,
+    },
+    {
+      factor: 'Regional Case Reports',
+      impact: 'negative' as const,
+      detail: '4 similar cases confirmed within 10 km in the last 7 days — active regional spread',
+    },
+    {
+      factor: 'Recent Rainfall',
+      impact: 'negative' as const,
+      detail: '12mm rainfall in last 24 hours — leaf wetness duration promotes infection establishment',
+    },
+    {
+      factor: 'Crop Variety Resistance',
+      impact: 'neutral' as const,
+      detail: `${result.cropVariety || 'Selected variety'} has moderate built-in resistance to this pathogen`,
+    },
+    {
+      // AI confidence is informational context, not a standalone risk driver
+      factor: 'AI Detection Certainty (context)',
+      impact: result.confidence >= 0.8 ? 'negative' as const : 'neutral' as const,
+      detail: `Model identified ${result.prediction} with ${(result.confidence * 100).toFixed(0)}% certainty — ${result.confidence >= 0.8 ? 'high certainty consistent with active infection' : 'moderate certainty: field inspection recommended to confirm'}`,
+    },
+  ];
+
+  // Risk score is derived from agronomic severity + context, NOT from AI confidence
+  const severityRiskMap: Record<string, number> = {
+    mild: 28,
+    moderate: 52,
+    severe: 72,
+    critical: 90,
+  };
+
+  let riskScore = severityRiskMap[result.severity] || 50;
+  if (result.growthStage === 'fruiting' || result.growthStage === 'flowering') riskScore += 8;
+  if (result.growthStage === 'harvest-ready') riskScore += 12;
+  riskScore = Math.min(100, riskScore);
+
+  // Derive risk level from score (same thresholds as riskEngine.ts)
+  const riskLevel: DetectionResult['riskLevel'] =
+    riskScore >= 80 ? 'critical' :
+    riskScore >= 56 ? 'high' :
+    riskScore >= 31 ? 'moderate' : 'low';
+
+  return {
+    // Context-based risk severity — independent of AI model confidence
+    riskScore,
+    riskLevel,
     riskFactors,
     weatherContribution: 'High humidity and warm temperatures significantly increase the risk of disease spread. Rain forecast for the next 48 hours may worsen conditions.',
     regionalContext: 'Multiple farms in your district have reported similar symptoms. The disease appears to be spreading in the region.',

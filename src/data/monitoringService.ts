@@ -27,6 +27,8 @@ export interface MonitoringCase {
   location: string;
   district: string;
   disease: string;
+  /** Whether this monitoring case tracks a disease, pest, or uncertain problem */
+  problemType?: 'disease' | 'pest' | 'uncertain';
   riskLevel: RiskLevel;
   // Initial diagnosis
   initialDate: string;

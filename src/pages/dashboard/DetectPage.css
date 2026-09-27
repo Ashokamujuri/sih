@@ -1014,3 +1014,506 @@
     text-align: center;
   }
 }
+
+/* ============================================
+   Unified Pipeline — New Styles
+   ============================================ */
+
+/* ---------- Problem Hint Selector ---------- */
+.problem-hint-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.problem-hint-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-3);
+  border: 2px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  background: var(--color-white);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: center;
+  font-family: var(--font-body);
+  color: var(--color-gray-600);
+}
+
+.problem-hint-btn:hover {
+  border-color: var(--color-primary-400);
+  background: var(--color-primary-50);
+  color: var(--color-primary-700);
+}
+
+.problem-hint-btn--active {
+  border-color: var(--color-primary-500);
+  background: var(--color-primary-50);
+  color: var(--color-primary-700);
+  box-shadow: 0 0 0 3px var(--color-primary-100);
+}
+
+.problem-hint-btn__icon {
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+.problem-hint-btn__label {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.problem-hint-btn__desc {
+  font-size: 0.68rem;
+  color: var(--color-gray-400);
+  line-height: 1.3;
+}
+
+.problem-hint-btn--active .problem-hint-btn__desc {
+  color: var(--color-primary-500);
+}
+
+.problem-hint-btn__check {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  color: var(--color-primary-600);
+}
+
+/* ---------- Hint Summary ---------- */
+.hint-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-primary-50);
+  border: 1px solid var(--color-primary-100);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-primary-700);
+  margin-top: var(--space-4);
+}
+
+/* ---------- Router Result Pill ---------- */
+.router-result-pill {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-2) var(--space-5);
+  border: 2px solid;
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-5);
+  animation: fadeIn var(--transition-base) ease;
+}
+
+/* ---------- Problem Type Header ---------- */
+.problem-type-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-left: 4px solid;
+  background: var(--color-gray-50);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.problem-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.prototype-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: #fef9c3;
+  color: #854d0e;
+  border: 1px solid #fde68a;
+  letter-spacing: 0.06em;
+}
+
+/* ---------- Uncertain Banner ---------- */
+.uncertain-banner {
+  display: flex;
+  gap: var(--space-5);
+  align-items: flex-start;
+  padding: var(--space-6);
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border: 1px solid #ddd6fe;
+  border-radius: var(--radius-xl);
+  margin-bottom: var(--space-4);
+}
+
+.uncertain-banner__icon {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-full);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #7c3aed;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.15);
+}
+
+.uncertain-banner__content h2 {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+  color: #4c1d95;
+}
+
+.uncertain-banner__content p {
+  font-size: var(--text-sm);
+  color: #5b21b6;
+  margin-bottom: var(--space-1);
+  line-height: 1.6;
+}
+
+.uncertain-banner__reason {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs);
+  color: #7c3aed;
+  opacity: 0.8;
+  margin-top: var(--space-2) !important;
+}
+
+/* ---------- Unified Metrics (AI Confidence ≠ Risk Score) ---------- */
+.unified-metrics {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-gray-50);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  margin: var(--space-3) 0;
+}
+
+.unified-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.unified-metric__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-gray-400);
+}
+
+.unified-metric__value {
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-gray-800);
+}
+
+.unified-metric__value--confidence {
+  color: var(--color-primary-600);
+}
+
+.unified-metric__note {
+  font-size: 0.68rem;
+  color: var(--color-gray-400);
+}
+
+.unified-metric__divider {
+  font-size: var(--text-xl);
+  font-weight: 800;
+  color: var(--color-gray-300);
+  flex-shrink: 0;
+  padding: 0 var(--space-1);
+}
+
+/* ---------- Risk Score in Result Bar ---------- */
+.overall-risk__score {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  opacity: 0.8;
+  display: block;
+  margin-top: 4px;
+}
+
+/* ---------- Risk Engine Note ---------- */
+.risk-engine-note {
+  font-size: var(--text-xs);
+  font-weight: 400;
+  color: var(--color-gray-400);
+  margin-left: var(--space-2);
+  background: var(--color-gray-100);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+/* ---------- Pest-specific Badges ---------- */
+.pest-life-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.pest-info-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.pest-info-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  background: var(--color-gray-100);
+  color: var(--color-gray-600);
+  border: 1px solid var(--color-gray-200);
+}
+
+/* ---------- Confidence Ring Note ---------- */
+.confidence-ring__note {
+  font-size: var(--text-xs);
+  color: var(--color-gray-400);
+  border-top: 1px solid var(--color-gray-100);
+  padding-top: var(--space-2);
+  margin-top: var(--space-2);
+  line-height: 1.5;
+}
+
+/* ---------- Assessment section title ---------- */
+.assessment-section__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* ---------- Responsive: problem hint grid ---------- */
+/* ---------- Risk Engine Loading ---------- */
+.risk-engine-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-primary-50);
+  border: 1px solid var(--color-primary-100);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-primary-700);
+  margin-bottom: var(--space-4);
+}
+
+.risk-engine-loading__spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-primary-200);
+  border-top-color: var(--color-primary-600);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Risk Engine Fallback ---------- */
+.risk-engine-fallback {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-warning-bg, #fef9c3);
+  border: 1px solid #fde68a;
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  color: #854d0e;
+  margin-bottom: var(--space-4);
+}
+
+/* ---------- Overall Risk Top Row ---------- */
+.overall-risk__top-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+/* ---------- Risk Trend Badge ---------- */
+.risk-trend-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.risk-trend-badge--increasing {
+  background: #fee2e2;
+  color: var(--color-danger);
+  border: 1px solid #fecaca;
+}
+
+.risk-trend-badge--stable {
+  background: var(--color-gray-100);
+  color: var(--color-gray-600);
+  border: 1px solid var(--color-gray-200);
+}
+
+.risk-trend-badge--decreasing {
+  background: #dcfce7;
+  color: var(--color-success);
+  border: 1px solid #bbf7d0;
+}
+
+/* ---------- Risk Explanation ---------- */
+.overall-risk__explanation {
+  font-size: var(--text-xs);
+  opacity: 0.85;
+  margin-top: var(--space-3);
+  line-height: 1.6;
+  padding-top: var(--space-2);
+  border-top: 1px solid currentColor;
+  border-opacity: 0.2;
+}
+
+/* ---------- Risk Category Breakdown ---------- */
+.risk-category-breakdown {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin: var(--space-4) 0;
+}
+
+.risk-category-breakdown__title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-gray-700);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.risk-category-bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.risk-cat-bar {
+  display: grid;
+  grid-template-columns: 160px 1fr 36px;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.risk-cat-bar__label {
+  font-size: var(--text-xs);
+  color: var(--color-gray-600);
+  white-space: nowrap;
+}
+
+.risk-cat-bar__track {
+  height: 8px;
+  background: var(--color-gray-100);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.risk-cat-bar__fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.risk-cat-bar__score {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-gray-500);
+  text-align: right;
+}
+
+/* ---------- Risk Stats Row ---------- */
+.risk-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  border-top: 1px solid var(--color-gray-100);
+  padding-top: var(--space-4);
+}
+
+.risk-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.risk-stat__value {
+  font-size: var(--text-lg);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.risk-stat__label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-gray-400);
+}
+
+@media (max-width: 640px) {
+  .risk-cat-bar {
+    grid-template-columns: 120px 1fr 32px;
+  }
+
+  .risk-stats-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+

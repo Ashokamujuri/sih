@@ -17,10 +17,25 @@ export interface ExpertCase {
   cropVariety: string;
   growthStage: string;
   imageUrl: string;
+  // AI Model output — what the model identified
   aiPrediction: string;
+  /**
+   * AI model certainty: 0.0–1.0
+   * HOW CONFIDENT THE MODEL IS about its identification.
+   * NOT related to how serious the crop health risk is.
+   */
   aiConfidence: number;
   aiSeverity: Severity;
+  // Problem type (disease vs pest) — set by the Problem Router
+  problemType?: 'disease' | 'pest' | 'uncertain';
+  // Contextual risk — independent of AI confidence
   riskLevel: RiskLevel;
+  /**
+   * Context-based risk score: 0–100
+   * HOW SERIOUS THE CROP HEALTH RISK IS, considering weather, reports, growth stage.
+   * COMPLETELY DIFFERENT from aiConfidence.
+   */
+  riskScore?: number;
   location: string;
   district: string;
   state: string;
@@ -42,6 +57,7 @@ export interface ExpertCase {
   verifiedDate?: string;
   rejectionReason?: string;
 }
+
 
 export interface VerificationHistoryEntry {
   id: string;
